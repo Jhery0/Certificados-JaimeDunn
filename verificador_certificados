@@ -1,0 +1,8 @@
+# dentro de la carpeta que contiene index.html y codes.json
+git init
+git add index.html codes.json
+git commit -m "Agregar index.html y codes.json (verificador)"
+# conecta con el repo remoto (copia la URL desde GitHub)
+git remote add origin https://github.com/TU_USUARIO/certificados-evento.git
+git branch -M main
+git push -u origin main
