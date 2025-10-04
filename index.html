@@ -7,77 +7,130 @@
   <style>
     html, body {
       margin: 0;
+      padding: 0;
       height: 100%;
       font-family: Arial, Helvetica, sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f4f6fa;
+      background-color: #060f2a; /* fallback */
+      overflow-x: hidden;
     }
 
-    /* Contenedor de grid 3x3 */
-    .grid-container {
-      display: grid;
-      grid-template-columns: auto auto auto;
-      grid-template-rows: auto auto auto;
-      gap: 0px;
-      align-items: center;
-      justify-items: center;
+    /* contenedor del fondo repetido */
+    .background-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: flex-start;
     }
 
-    /* Todas las celdas tienen la misma altura que la tarjeta */
-    .grid-item {
-      width: 300px;       /* ancho fijo de la imagen */
-      height: 200px;      /* altura igual a la tarjeta */
-      background: url('imagenes/jaime_dunn_fondo.jpg') center center / cover no-repeat;
+    .bg-image {
+      background: url('imagenes/jaime_dunn_fondo.jpg') center center / contain no-repeat;
     }
 
-    /* La tarjeta central */
+    /* Capa sólida detrás de la tarjeta */
+    .card-bg {
+      position: absolute;
+      background-color: rgba(6,17,42,1);
+      border-radius: 12px;
+      z-index: 5; /* entre el fondo y la tarjeta */
+    }
+
+    /* Tarjeta central */
     .overlay {
-      grid-column: 2 / 3;
-      grid-row: 2 / 3;
-      background: rgba(255,255,255,0.95);
+      position: relative;
+      z-index: 10;
+      background: rgba(6,17,42,0.75); /* color con 75% de transparencia */
       padding: 28px;
+      backdrop-filter: blur(4px);
       border-radius: 12px;
       box-shadow: 0 6px 24px rgba(15,20,30,0.08);
       max-width: 520px;
+      width: 90%;
       text-align: center;
-      z-index: 10;
+      color: #fff;
     }
 
-    h1 { margin:0 0 12px; font-size:20px; color:#111 }
-    p { color:#444; margin:8px 0 }
+    h1 { margin:0 0 12px; font-size:20px; color:#fff }
+    p { margin:8px 0 }
     .valid { color:#0a7d3c; font-weight:700 }
     .invalid { color:#b02a37; font-weight:700 }
     input[type="text"]{ width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:10px }
     button{ margin-top:10px; padding:10px 14px; border-radius:8px; border:0; background:#2b6be6; color:#fff; cursor:pointer }
-    small{ color:#666; display:block; margin-top:10px }
+    small{ color:#ccc; display:block; margin-top:10px }
     a.whatsapp-link{display:block;margin-top:12px;color:#25D366;text-decoration:none;font-weight:700}
   </style>
 </head>
 <body>
-  <div class="grid-container">
-    <div class="grid-item"></div>
-    <div class="grid-item"></div>
-    <div class="grid-item"></div>
-    <div class="grid-item"></div>
-    <div class="overlay">
-      <h1>Verificación de Certificado de Participación en el Seminario Economía y Libertad impartido por Jaime Dunn</h1>
-      <p id="result">Cargando...</p>
-      <div id="manual-search" style="display:none">
-        <input id="code-input" type="text" placeholder="Pega el código o escribe el nombre completo" />
-        <button id="btn-check">Verificar</button>
-      </div>
-      <a class="whatsapp-link" href="https://chat.whatsapp.com/BXwK7uUkdL51OUIPXNEkzm?mode=ems_copy_t" target="_blank">Únete al grupo de Jaime Dunn UMSS en Whatsapp</a>
-      <small>Si tienes problemas, actualiza la página (F5) o copia/pega el código/nombre manualmente.</small>
+  <!-- Fondo repetido -->
+  <div class="background-container" id="bg-container"></div>
+
+  <!-- Fondo sólido detrás de la tarjeta -->
+  <div class="card-bg" id="card-bg"></div>
+
+  <!-- Tarjeta principal -->
+  <div class="overlay" id="overlay">
+    <h1>Verificación de Certificado de Participación en el Seminario Economía y Libertad impartido por Jaime Dunn</h1>
+    <p id="result">Cargando...</p>
+    <div id="manual-search" style="display:none">
+      <input id="code-input" type="text" placeholder="Pega el código o escribe el nombre completo" />
+      <button id="btn-check">Verificar</button>
     </div>
-    <div class="grid-item"></div>
-    <div class="grid-item"></div>
-    <div class="grid-item"></div>
-    <div class="grid-item"></div>
+    <a class="whatsapp-link" href="https://chat.whatsapp.com/BXwK7uUkdL51OUIPXNEkzm?mode=ems_copy_t" target="_blank">Únete al grupo de Jaime Dunn UMSS en Whatsapp</a>
+    <small>Si tienes problemas, actualiza la página (F5) o copia/pega el código/nombre manualmente.</small>
   </div>
 
   <script>
+    // Fondo de imágenes repetidas
+    function generateBackground() {
+      const container = document.getElementById('bg-container');
+      container.innerHTML = '';
+
+      const overlay = document.querySelector('.overlay');
+      const overlayHeight = overlay.offsetHeight;
+
+      const img = new Image();
+      img.src = 'imagenes/jaime_dunn_fondo.jpg';
+      img.onload = function() {
+        const aspectRatio = img.width / img.height;
+        const imgHeight = overlayHeight;
+        const imgWidth = imgHeight * aspectRatio;
+
+        const cols = Math.ceil(window.innerWidth / imgWidth);
+        const rows = Math.ceil(window.innerHeight / imgHeight);
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const div = document.createElement('div');
+            div.classList.add('bg-image');
+            div.style.width = imgWidth + 'px';
+            div.style.height = imgHeight + 'px';
+            container.appendChild(div);
+          }
+        }
+
+        // Ajustar fondo sólido detrás de la tarjeta
+        const cardBg = document.getElementById('card-bg');
+        const overlayRect = overlay.getBoundingClientRect();
+        cardBg.style.left = overlayRect.left + 'px';
+        cardBg.style.top = overlayRect.top + 'px';
+        cardBg.style.width = overlayRect.width + 'px';
+        cardBg.style.height = overlayRect.height + 'px';
+      }
+    }
+
+    window.addEventListener('resize', generateBackground);
+    window.addEventListener('load', generateBackground);
+
+    // -------------------------------------------------
+    // Código de verificación de certificados
     async function loadData() {
       const result = document.getElementById('result');
       try {
