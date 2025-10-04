@@ -36,74 +36,71 @@
 </head>
 <body>
   <div class="overlay">
-    <h1>Verificación de Certificado</h1>
+    <h1>Verificación de Certificado de Participación en el Seminario Economía y Libertad impartido por Jaime Dunn</h1>
     <p id="result">Cargando...</p>
     <div id="manual-search" style="display:none">
       <input id="code-input" type="text" placeholder="Pega el código o escribe el nombre completo" />
       <button id="btn-check">Verificar</button>
     </div>
-    <a class="whatsapp-link" href="https://chat.whatsapp.com/BXwK7uUkdL51OUIPXNEkzm?mode=ems_copy_t" target="_blank">Únete a nuestro grupo de WhatsApp</a>
+    <a class="whatsapp-link" href="https://chat.whatsapp.com/BXwK7uUkdL51OUIPXNEkzm?mode=ems_copy_t" target="_blank">Únete al grupo de Jaime Dunn UMSS en Whatsapp</a>
     <small>Si tienes problemas, actualiza la página (F5) o copia/pega el código/nombre manualmente.</small>
   </div>
 
   <script>
-    function normalizeText(str) {
-      return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+async function loadData() {
+  const result = document.getElementById('result');
+  try {
+    const resp = await fetch('codes.json', {cache: "no-store"});
+    if (!resp.ok) throw new Error('No se pudo cargar la base de datos');
+    const data = await resp.json();
+
+    function normalize(str) {
+      return str.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
     }
 
-    async function loadData() {
-      const result = document.getElementById('result');
-      try {
-        const resp = await fetch('codes.json', {cache: "no-store"});
-        if (!resp.ok) throw new Error('No se pudo cargar la base de datos');
-        const data = await resp.json();
-
-        function show(searchInput) {
-          if (!searchInput) {
-            result.innerHTML = 'No se proporcionó código o nombre. Puedes pegarlo abajo.';
-            document.getElementById('manual-search').style.display = 'block';
-            return;
-          }
-
-          let entry = data[searchInput]; // búsqueda por código
-
-          if (!entry) {
-            const normalizedInput = normalizeText(searchInput);
-            for (let key in data) {
-              if (normalizeText(data[key].name) === normalizedInput) {
-                entry = data[key];
-                break;
-              }
-            }
-          }
-
-          if (entry) {
-            result.innerHTML = '<div class="valid">✅ Certificado válido</div>' +
-                               '<div>Nombre: <b>' + entry.name + '</b></div>';
-          } else {
-            result.innerHTML = '<div class="invalid">❌ Código o nombre no encontrado</div>';
-          }
-
-          document.getElementById('manual-search').style.display = 'block';
-        }
-
-        // leer ?code= en la URL
-        const params = new URLSearchParams(window.location.search);
-        const code = params.get('code');
-        show(code);
-
-        // búsqueda manual
-        document.getElementById('btn-check').addEventListener('click', () => {
-          const c = document.getElementById('code-input').value.trim();
-          show(c);
-        });
-
-      } catch (err) {
-        result.innerHTML = 'Error cargando la base de datos. ' + err;
+    function showByCodeOrName(input) {
+      if (!input) {
+        result.innerHTML = 'No se proporcionó ningún código o nombre. Puedes pegarlo abajo.';
+        document.getElementById('manual-search').style.display = 'block';
+        return;
       }
+
+      // primero buscar por código
+      let name = data[input];
+      if (name) {
+        result.innerHTML = `<div class="valid">✅ Certificado válido</div><div>Nombre: <b>${name}</b></div>`;
+      } else {
+        // buscar por nombre completo insensible a mayúsculas y acentos
+        const inputNorm = normalize(input);
+        const match = Object.values(data).find(n => normalize(n) === inputNorm);
+        if (match) {
+          result.innerHTML = `<div class="valid">✅ Certificado válido</div><div>Nombre: <b>${match}</b></div>`;
+        } else {
+          result.innerHTML = '<div class="invalid">❌ Código o nombre no encontrado</div>';
+        }
+      }
+      document.getElementById('manual-search').style.display = 'block';
     }
 
-    loadData();
-  </script>
+    // leer param ?code=
+    const params = new URLSearchParams(window.location.search);
+    const codeOrName = params.get('code');
+    showByCodeOrName(codeOrName);
+
+    // búsqueda manual
+    document.getElementById('btn-check').addEventListener('click', () => {
+      const input = document.getElementById('code-input').value.trim();
+      showByCodeOrName(input);
+    });
+
+  } catch (err) {
+    result.innerHTML = 'Error cargando la base de datos. ' + err;
+  }
+}
+
+loadData();
+</script>
+
 </body>
 </html>
+
