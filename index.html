@@ -103,7 +103,7 @@
     const imgHeight = overlayHeight; // altura igual a la tarjeta
     const imgWidth = imgHeight * aspectRatio;
 
-    const overlap = 0.09; // 7% de solapamiento
+    const overlap = 0.025;
     const cols = Math.ceil(window.innerWidth / (imgWidth * (1 - overlap)));
     const rows = Math.ceil(window.innerHeight / (imgHeight * (1 - overlap)));
 
@@ -187,3 +187,4 @@
   </script>
 </body>
 </html>
+
