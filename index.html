@@ -5,29 +5,52 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Verificación de Certificados</title>
   <style>
-    body{font-family:Arial,Helvetica,sans-serif;background:#f4f6fa;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
-    .card{background:#fff;padding:28px;border-radius:12px;box-shadow:0 6px 24px rgba(15,20,30,0.08);max-width:520px;text-align:center}
-    h1{margin:0 0 12px;font-size:20px;color:#111}
-    p{color:#444;margin:8px 0}
-    .valid{color:#0a7d3c;font-weight:700}
-    .invalid{color:#b02a37;font-weight:700}
-    input[type="text"]{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;margin-top:10px}
-    button{margin-top:10px;padding:10px 14px;border-radius:8px;border:0;background:#2b6be6;color:#fff;cursor:pointer}
-    small{color:#666;display:block;margin-top:10px}
+    /* Fondo con imagen */
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: url('imagenes/jaime_dunn_fondo.jpg') no-repeat center center fixed;
+      background-size: cover;
+    }
+    .overlay {
+      background: rgba(255,255,255,0.95);
+      padding: 28px;
+      border-radius: 12px;
+      box-shadow: 0 6px 24px rgba(15,20,30,0.08);
+      max-width: 520px;
+      text-align: center;
+    }
+    h1 { margin:0 0 12px; font-size:20px; color:#111 }
+    p { color:#444; margin:8px 0 }
+    .valid { color:#0a7d3c; font-weight:700 }
+    .invalid { color:#b02a37; font-weight:700 }
+    input[type="text"]{ width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:10px }
+    button{ margin-top:10px; padding:10px 14px; border-radius:8px; border:0; background:#2b6be6; color:#fff; cursor:pointer }
+    small{ color:#666; display:block; margin-top:10px }
+    a.whatsapp-link{display:block;margin-top:12px;color:#25D366;text-decoration:none;font-weight:700}
   </style>
 </head>
 <body>
-  <div class="card">
+  <div class="overlay">
     <h1>Verificación de Certificado</h1>
     <p id="result">Cargando...</p>
     <div id="manual-search" style="display:none">
-      <input id="code-input" type="text" placeholder="Pega o escribe tu código aquí" />
+      <input id="code-input" type="text" placeholder="Pega el código o escribe el nombre completo" />
       <button id="btn-check">Verificar</button>
     </div>
-    <small>Si tienes problemas, intenta actualizar la página (F5) o copia/pega el código manualmente.</small>
+    <a class="whatsapp-link" href="https://chat.whatsapp.com/BXwK7uUkdL51OUIPXNEkzm?mode=ems_copy_t" target="_blank">Únete a nuestro grupo de WhatsApp</a>
+    <small>Si tienes problemas, actualiza la página (F5) o copia/pega el código/nombre manualmente.</small>
   </div>
 
   <script>
+    function normalizeText(str) {
+      return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    }
+
     async function loadData() {
       const result = document.getElementById('result');
       try {
@@ -35,23 +58,36 @@
         if (!resp.ok) throw new Error('No se pudo cargar la base de datos');
         const data = await resp.json();
 
-        // función para mostrar resultado
-        function show(code) {
-          if (!code) {
-            result.innerHTML = 'No se proporcionó ningún código en la URL. Puedes pegarlo abajo.';
+        function show(searchInput) {
+          if (!searchInput) {
+            result.innerHTML = 'No se proporcionó código o nombre. Puedes pegarlo abajo.';
             document.getElementById('manual-search').style.display = 'block';
             return;
           }
-          const name = data[code];
-          if (name) {
-            result.innerHTML = '<div class="valid">✅ Certificado válido</div><div>Nombre: <b>' + name + '</b></div>';
-          } else {
-            result.innerHTML = '<div class="invalid">❌ Código no encontrado</div>';
+
+          let entry = data[searchInput]; // búsqueda por código
+
+          if (!entry) {
+            const normalizedInput = normalizeText(searchInput);
+            for (let key in data) {
+              if (normalizeText(data[key].name) === normalizedInput) {
+                entry = data[key];
+                break;
+              }
+            }
           }
+
+          if (entry) {
+            result.innerHTML = '<div class="valid">✅ Certificado válido</div>' +
+                               '<div>Nombre: <b>' + entry.name + '</b></div>';
+          } else {
+            result.innerHTML = '<div class="invalid">❌ Código o nombre no encontrado</div>';
+          }
+
           document.getElementById('manual-search').style.display = 'block';
         }
 
-        // leer param ?code=
+        // leer ?code= en la URL
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
         show(code);
